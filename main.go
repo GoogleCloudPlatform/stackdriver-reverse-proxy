@@ -66,8 +66,5 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	defer s.FinishWait()
 
 	resp, err := http.DefaultTransport.RoundTrip(req)
-	if err != nil {
-		s.SetLabel("error", err.Error())
-	}
 	return resp, err
 }
