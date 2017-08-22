@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/trace"
 )
 
@@ -33,7 +34,17 @@ func main() {
 	flag.BoolVar(&enableLogging, "enable-logging", false, "set to enable logging to stackdriver")
 	flag.Parse()
 
-	// TODO(jbd): Handle missing required flags.
+	if projectID == "" {
+		// Try to retrieve it from metadata server.
+		if metadata.OnGCE() {
+			pid, err := metadata.ProjectID()
+			if err != nil {
+				log.Fatalf("Cannot get project ID from metadata server: %v", err)
+			}
+			projectID = pid
+		}
+	}
+	// TODO(jbd): Show usage if projectID is not set.
 
 	tc, err := trace.NewClient(ctx, projectID)
 	if err != nil {
