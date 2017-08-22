@@ -50,6 +50,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Cannot initiate trace client: %v", err)
 	}
+	sp, _ := trace.NewLimitedSampler(1, 1<<32)
+	tc.SetSamplingPolicy(sp)
 
 	url, err := url.Parse(target)
 	if err != nil {
