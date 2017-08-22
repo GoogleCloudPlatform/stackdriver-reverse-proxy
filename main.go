@@ -76,8 +76,11 @@ type transport struct {
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	s := t.Trace.SpanFromRequest(req)
-	defer s.FinishWait()
+	defer s.Finish()
 
 	resp, err := http.DefaultTransport.RoundTrip(req)
+	if err != nil {
+		s.SetLabel("error", err.Error())
+	}
 	return resp, err
 }
