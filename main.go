@@ -17,10 +17,12 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/trace"
@@ -34,8 +36,20 @@ var (
 	tlsKey    string
 	traceFrac float64
 
-	enableLogging bool
+	enableLogging      bool
+	enableErrorReports bool
 )
+
+const usage = `stackdriver-proxy [options...] -http=<host:port> -target=<target_url>
+
+For example, to start at localhost:8080 to proxy requests to localhost:6060,
+  $ stackdriver-proxy -http=:8080 http://localhost:6060
+
+Options:
+  -project   Google Cloud Platform project ID if running outside of GCP.
+  -tls-cert  TLS cert file to start an HTTPS proxy.
+  -tls-key   TLS key file to start an HTTPS proxy.
+`
 
 func main() {
 	ctx := context.Background()
@@ -46,9 +60,13 @@ func main() {
 	flag.StringVar(&tlsCert, "tls-cert", "", "TLS cert file to start an HTTPS proxy")
 	flag.StringVar(&tlsKey, "tls-key", "", "TLS key file to start an HTTPS proxy")
 	flag.Float64Var(&traceFrac, "trace-fraction", 1, "sampling fraction for tracing")
-	flag.BoolVar(&enableLogging, "enable-logging", false, "set to enable logging to stackdriver")
+	flag.BoolVar(&enableLogging, "enable-logs", false, "set to enable logging to stackdriver")
+	flag.BoolVar(&enableErrorReports, "enable-errorreports", false, "set to enable error reporting to stackdriver")
 	flag.Parse()
 
+	if target == "" {
+		usageExit()
+	}
 	if projectID == "" {
 		// Try to retrieve it from metadata server.
 		if metadata.OnGCE() {
@@ -59,7 +77,9 @@ func main() {
 			projectID = pid
 		}
 	}
-	// TODO(jbd): Show usage if projectID is not set.
+	if projectID == "" {
+		usageExit()
+	}
 
 	tc, err := trace.NewClient(ctx, projectID)
 	if err != nil {
@@ -99,4 +119,9 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		s.SetLabel("error", err.Error())
 	}
 	return resp, err
+}
+
+func usageExit() {
+	fmt.Println(usage)
+	os.Exit(1)
 }
