@@ -27,11 +27,13 @@ import (
 )
 
 var (
-	projectID     string
-	listen        string
-	target        string
-	tlsCert       string
-	tlsKey        string
+	projectID string
+	listen    string
+	target    string
+	tlsCert   string
+	tlsKey    string
+	traceFrac float64
+
 	enableLogging bool
 )
 
@@ -43,6 +45,7 @@ func main() {
 	flag.StringVar(&target, "target", "", "target server")
 	flag.StringVar(&tlsCert, "tls-cert", "", "TLS cert file to start an HTTPS proxy")
 	flag.StringVar(&tlsKey, "tls-key", "", "TLS key file to start an HTTPS proxy")
+	flag.Float64Var(&traceFrac, "trace-fraction", 1, "sampling fraction for tracing")
 	flag.BoolVar(&enableLogging, "enable-logging", false, "set to enable logging to stackdriver")
 	flag.Parse()
 
@@ -62,7 +65,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Cannot initiate trace client: %v", err)
 	}
-	sp, _ := trace.NewLimitedSampler(1, 1<<32)
+	sp, _ := trace.NewLimitedSampler(traceFrac, 1<<32)
 	tc.SetSamplingPolicy(sp)
 
 	url, err := url.Parse(target)
