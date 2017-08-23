@@ -26,8 +26,6 @@ import (
 	"cloud.google.com/go/trace"
 )
 
-// TODO(jbd): Support HTTPS.
-
 var (
 	projectID     string
 	listen        string
