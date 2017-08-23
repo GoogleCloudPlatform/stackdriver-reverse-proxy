@@ -90,6 +90,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	s := t.Trace.SpanFromRequest(req)
 	defer s.Finish()
 
+	req.Header.Set("X-Cloud-Trace-Context", s.Header())
 	resp, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
 		s.SetLabel("error", err.Error())
