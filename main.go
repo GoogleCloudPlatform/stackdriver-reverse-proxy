@@ -30,38 +30,50 @@ import (
 
 var (
 	projectID string
+	creds     string
+
 	listen    string
 	target    string
 	tlsCert   string
 	tlsKey    string
 	traceFrac float64
 
-	enableLogging      bool
 	enableErrorReports bool
 )
 
-const usage = `stackdriver-proxy [options...] -http=<host:port> -target=<target_url>
+const usage = `stackdriver-proxy [opts...] -http=<host:port> -target=<target_url>
 
 For example, to start at localhost:8080 to proxy requests to localhost:6060,
-  $ stackdriver-proxy -http=:8080 http://localhost:6060
+  $ stackdriver-proxy -http=:8080 -target=http://localhost:6060
 
 Options:
-  -project   Google Cloud Platform project ID if running outside of GCP.
-  -tls-cert  TLS cert file to start an HTTPS proxy.
-  -tls-key   TLS key file to start an HTTPS proxy.
+  -project        Google Cloud Platform project ID if running outside of GCP.
+  -creds          Google Cloud credentials file. If not given, ADC is used.
+  -enable-errors  Set true to enable error reporting to Stackdriver.
+
+Tracing options:
+  -trace-fraction Tracing sampling fraction, [0, 1.0].
+
+HTTPS options:
+  -tls-cert TLS cert file to start an HTTPS proxy.
+  -tls-key  TLS key file to start an HTTPS proxy.
 `
 
 func main() {
 	ctx := context.Background()
+	flag.Usage = func() {
+		fmt.Println(usage)
+	}
 
-	flag.StringVar(&projectID, "project", "", "google cloud project ID")
+	flag.StringVar(&projectID, "project", "", "")
+	flag.StringVar(&creds, "credentials", "", "")
+
 	flag.StringVar(&listen, "http", ":6996", "host:port proxy listens")
 	flag.StringVar(&target, "target", "", "target server")
+	flag.Float64Var(&traceFrac, "trace-fraction", 1, "sampling fraction for tracing")
+	flag.BoolVar(&enableErrorReports, "enable-errorreports", false, "set to enable error reporting to stackdriver")
 	flag.StringVar(&tlsCert, "tls-cert", "", "TLS cert file to start an HTTPS proxy")
 	flag.StringVar(&tlsKey, "tls-key", "", "TLS key file to start an HTTPS proxy")
-	flag.Float64Var(&traceFrac, "trace-fraction", 1, "sampling fraction for tracing")
-	flag.BoolVar(&enableLogging, "enable-logs", false, "set to enable logging to stackdriver")
-	flag.BoolVar(&enableErrorReports, "enable-errorreports", false, "set to enable error reporting to stackdriver")
 	flag.Parse()
 
 	if target == "" {
@@ -122,6 +134,6 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func usageExit() {
-	fmt.Println(usage)
+	flag.Usage()
 	os.Exit(1)
 }
