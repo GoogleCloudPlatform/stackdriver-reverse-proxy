@@ -95,7 +95,7 @@ func main() {
 
 	url, err := url.Parse(target)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Cannot URL parse -target: %v", err)
 	}
 
 	tc, err := trace.NewClient(ctx, projectID)
