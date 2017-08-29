@@ -52,7 +52,7 @@ Options:
   -enable-errors  Set true to enable error reporting to Stackdriver.
 
 Tracing options:
-  -trace-fraction Tracing sampling fraction, [0, 1.0].
+  -trace-fraction Tracing sampling fraction, between 0 and 1.0.
 
 HTTPS options:
   -tls-cert TLS cert file to start an HTTPS proxy.
