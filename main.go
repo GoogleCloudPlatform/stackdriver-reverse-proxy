@@ -93,6 +93,11 @@ func main() {
 		usageExit()
 	}
 
+	url, err := url.Parse(target)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	tc, err := trace.NewClient(ctx, projectID)
 	if err != nil {
 		log.Fatalf("Cannot initiate trace client: %v", err)
@@ -100,16 +105,10 @@ func main() {
 	sp, _ := trace.NewLimitedSampler(traceFrac, 1<<32)
 	tc.SetSamplingPolicy(sp)
 
-	url, err := url.Parse(target)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	proxy := httputil.NewSingleHostReverseProxy(url)
 	proxy.Transport = &transport{
 		Trace: tc,
 	}
-
 	if tlsCert != "" && tlsKey != "" {
 		log.Fatal(http.ListenAndServeTLS(listen, tlsCert, tlsKey, proxy))
 	} else {
