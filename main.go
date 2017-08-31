@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Program stackdriver-reverse-proxy provides a Stackdriver reverse
+// proxy that creates traces for the incoming requests, logs request
+// details, and reports errors.
 package main
 
 import (
