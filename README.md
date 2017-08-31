@@ -1,6 +1,6 @@
-# stackdriver-proxy
+# stackdriver-reverse-proxy
 
-stackdriver-proxy is an HTTP proxy to automatically traces
+stackdriver-reverse-proxy is an HTTP proxy to automatically traces
 all the incoming requests.
 
-Note: This is not an official Google product.
+Note: This is not an official Google product and in active development.

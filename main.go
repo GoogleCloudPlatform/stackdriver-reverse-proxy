@@ -41,10 +41,10 @@ var (
 	enableErrorReports bool
 )
 
-const usage = `stackdriver-proxy [opts...] -http=<host:port> -target=<target_url>
+const usage = `stackdriver-reverse-proxy [opts...] -http=<host:port> -target=<target_url>
 
 For example, to start at localhost:8080 to proxy requests to localhost:6060,
-  $ stackdriver-proxy -http=:8080 -target=http://localhost:6060
+  $ stackdriver-reverse-proxy -http=:8080 -target=http://localhost:6060
 
 Options:
   -project        Google Cloud Platform project ID if running outside of GCP.
