@@ -44,12 +44,14 @@ var (
 	enableErrorReports bool
 )
 
-const usage = `stackdriver-reverse-proxy [opts...] -http=<host:port> -target=<target_url>
+const usage = `stackdriver-reverse-proxy [opts...]
 
 For example, to start at localhost:8080 to proxy requests to localhost:6060,
   $ stackdriver-reverse-proxy -http=:8080 -target=http://localhost:6060
 
 Options:
+  -http           hostname:port to start the proxy server, by default localhost:6996.
+  -target         hostname:port where the app server is running, :8080 by default.
   -project        Google Cloud Platform project ID if running outside of GCP.
   -creds          Google Cloud credentials file. If not given, ADC is used.
   -enable-errors  Set true to enable error reporting to Stackdriver.
@@ -72,7 +74,7 @@ func main() {
 	flag.StringVar(&creds, "credentials", "", "")
 
 	flag.StringVar(&listen, "http", ":6996", "host:port proxy listens")
-	flag.StringVar(&target, "target", "", "target server")
+	flag.StringVar(&target, "target", ":8080", "target server")
 	flag.Float64Var(&traceFrac, "trace-fraction", 1, "sampling fraction for tracing")
 	flag.BoolVar(&enableErrorReports, "enable-errorreports", false, "set to enable error reporting to stackdriver")
 	flag.StringVar(&tlsCert, "tls-cert", "", "TLS cert file to start an HTTPS proxy")
