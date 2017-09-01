@@ -8,7 +8,7 @@ all the incoming requests.
 ## Installation and usage
 
 ```
-$ go get github.com/GoogleCloudPlatform/stackdriver-reverse-proxy/cmd/stackdriver-reverse-proxy
+$ go get -u github.com/GoogleCloudPlatform/stackdriver-reverse-proxy/cmd/stackdriver-reverse-proxy
 ```
 
 Once installed, start the proxy server and target your application server. For example, if
