@@ -15,9 +15,12 @@
 package sproxy
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
+
+	monitoring "cloud.google.com/go/monitoring/apiv3"
 )
 
 type Event struct {
@@ -31,20 +34,23 @@ type Event struct {
 }
 
 type MetricsReporter struct {
+	mu            sync.Mutex
 	currentEvents []*Event
 	period        time.Duration
 
 	cancelChan <-chan bool
 	cancelFn   func() error
 
-	// mu protects statsRecvFn
-	mu          sync.RWMutex
-	statsRecvFn func(*InflightStats) error
+	service *monitoring.MetricClient
 }
 
 const defaultPeriod = 1 * time.Minute
 
-func NewMetricsReporter(period time.Duration) (*MetricsReporter, error) {
+func NewMetricsReporter(ctx context.Context, projectID string, period time.Duration) (*MetricsReporter, error) {
+	service, err := monitoring.NewMetricClient(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if period <= 0 {
 		period = defaultPeriod
 	}
@@ -54,11 +60,15 @@ func NewMetricsReporter(period time.Duration) (*MetricsReporter, error) {
 		currentEvents: make([]*Event, 0, 512), // Arbitrary value
 		cancelChan:    cancelChan,
 		cancelFn:      cancelFn,
+		service:       service,
 	}
 	return mr, nil
 }
 
 func (mr *MetricsReporter) Close() error {
+	if err := mr.service.Close(); err != nil {
+		return err
+	}
 	if mr.cancelFn == nil {
 		return nil
 	}
@@ -77,7 +87,7 @@ func makeCanceler() (<-chan bool, func() error) {
 	cancelChan := make(chan bool, 1)
 	var cancelOnce sync.Once
 	cancelFn := func() error {
-		var err error = errAlreadyClosed
+		err := errAlreadyClosed
 		cancelOnce.Do(func() {
 			close(cancelChan)
 			err = nil
@@ -101,7 +111,7 @@ func (mr *MetricsReporter) Do() {
 			// Otherwise the duration has lapsed
 		}
 
-		i += 1
+		i++
 		drainedEvents := mr.drainEvents()
 
 		go mr.reportEvents(drainedEvents, i)
@@ -130,11 +140,11 @@ func (mr *MetricsReporter) reportEvents(events []*Event, nIter uint64) {
 		traceIDs = append(traceIDs, evt.TraceID)
 		switch evt.Request {
 		case true:
-			nRequests += 1
+			nRequests++
 		default:
 			statusIndex := evt.StatusCode / 100
-			responsesCounter[statusIndex] += 1
-			nResponses += 1
+			responsesCounter[statusIndex]++
+			nResponses++
 			totalResponseDuration += evt.EndTime.Sub(evt.StartTime)
 		}
 	}
@@ -169,17 +179,5 @@ type InflightStats struct {
 }
 
 func (mr *MetricsReporter) sendStats(stats *InflightStats) error {
-	mr.mu.RLock()
-	recvFn := mr.statsRecvFn
-	mr.mu.RUnlock()
-	if recvFn == nil {
-		return nil
-	}
-	return recvFn(stats)
-}
-
-func (mr *MetricsReporter) SetStatsReceiver(statsRecvFn func(*InflightStats) error) {
-	mr.mu.Lock()
-	mr.statsRecvFn = statsRecvFn
-	mr.mu.Unlock()
+	// service.
 }

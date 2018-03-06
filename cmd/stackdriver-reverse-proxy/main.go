@@ -43,8 +43,8 @@ var (
 	tlsKey    string
 	traceFrac float64
 
-	monitorHTTPOff bool
-	monitorPeriod  string
+	disableMonitoring bool
+	monitoringPeriod  string
 
 	enableErrorReports bool
 )
@@ -81,8 +81,8 @@ func main() {
 	flag.Float64Var(&traceFrac, "trace-fraction", 1, "sampling fraction for tracing")
 	flag.StringVar(&tlsCert, "tls-cert", "", "TLS cert file to start an HTTPS proxy")
 	flag.StringVar(&tlsKey, "tls-key", "", "TLS key file to start an HTTPS proxy")
-	flag.BoolVar(&monitorHTTPOff, "monitor-http-off", false, "send monitor reports to stackdriver Monitoring")
-	flag.StringVar(&monitorPeriod, "monitor-period", "1m", "the period for stackdriver Monitoring")
+	flag.BoolVar(&disableMonitoring, "disable-monitoring", false, "send monitor reports to stackdriver Monitoring")
+	flag.StringVar(&monitoringPeriod, "monitoring-period", "1m", "the period for stackdriver Monitoring")
 	flag.Parse()
 
 	if target == "" {
@@ -107,22 +107,21 @@ func main() {
 		log.Fatalf("Cannot URL parse -target: %v", err)
 	}
 
-	var metricsReporter *sproxy.MetricsReporter
-	if !monitorHTTPOff {
-		period, err := time.ParseDuration(monitorPeriod)
+	var metrics *sproxy.MetricsReporter
+	if !disableMonitoring {
+		period, err := time.ParseDuration(monitoringPeriod)
 		if err != nil {
 			period = 1 * time.Minute
 		}
-		metricsReporter, err = sproxy.NewMetricsReporter(period)
+		metrics, err = sproxy.NewMetricsReporter(ctx, projectID, period)
 		if err != nil {
 			log.Fatalf("Cannot create the metricsReporter: %v", err)
 		}
-		metricsReporter.SetStatsReceiver(sendToStackDriverMonitoring)
+		// Fire up the metrics reporter.
+		go metrics.Do()
 
-		// Fire up the metricsReporter
-		go metricsReporter.Do()
-		// Close it once we are done
-		defer metricsReporter.Close()
+		// Close it once we are done.
+		defer metrics.Close()
 	}
 
 	tc, err := trace.NewClient(ctx, projectID)
@@ -135,7 +134,7 @@ func main() {
 	proxy := httputil.NewSingleHostReverseProxy(url)
 	proxy.Transport = &transport{
 		Trace:           tc,
-		MetricsReporter: metricsReporter,
+		MetricsReporter: metrics,
 	}
 	if tlsCert != "" && tlsKey != "" {
 		log.Fatal(http.ListenAndServeTLS(listen, tlsCert, tlsKey, proxy))
@@ -166,15 +165,13 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		})
 
 		// At the end, once we have a response,
-		// capture its end metrics and fire off events
+		// capture its end metrics and fire off events.
 		defer func() {
 			statusCode := 500
 			if resp != nil {
 				statusCode = resp.StatusCode
 			}
-
-			// Fire off in a goroutine so that RoundTrip isn't blocked
-			// at all
+			// Run in a goroutine so that RoundTrip isn't blocked at all.
 			go mr.AddEvent(&sproxy.Event{
 				StartTime:  startTime,
 				EndTime:    time.Now(),
@@ -195,10 +192,4 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 func usageExit() {
 	flag.Usage()
 	os.Exit(1)
-}
-
-func sendToStackDriverMonitoring(stats *sproxy.InflightStats) error {
-	// TODO (@odeke-em, @rakyll):
-	// Insert the code for uploading to StackDriverMonitoring here
-	return nil
 }
