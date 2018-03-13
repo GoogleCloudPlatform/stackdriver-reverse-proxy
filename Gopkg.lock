@@ -3,14 +3,14 @@
 
 [[projects]]
   name = "cloud.google.com/go"
-  packages = ["compute/metadata","internal/tracecontext","internal/version","monitoring/apiv3","trace"]
-  revision = "0f0b8420cb699ac4ce059c63bac263f4301fe95b"
-  version = "v0.12.0"
+  packages = ["compute/metadata","internal/version","monitoring/apiv3","trace/apiv2"]
+  revision = "20d4028b8a750c2aca76bf9fefa8ed2d0109b573"
+  version = "v0.19.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
-  packages = ["proto","protoc-gen-go/descriptor","ptypes","ptypes/any","ptypes/duration","ptypes/empty","ptypes/timestamp"]
+  packages = ["proto","protoc-gen-go/descriptor","ptypes","ptypes/any","ptypes/duration","ptypes/empty","ptypes/timestamp","ptypes/wrappers"]
   revision = "83cd65fc365ace80eb6b6ecfc45203e43edfbc70"
 
 [[projects]]
@@ -18,6 +18,12 @@
   packages = ["."]
   revision = "317e0006254c44a0ac427cc52a0e083ff0b9622f"
   version = "v2.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "go.opencensus.io"
+  packages = ["exporter/stackdriver","exporter/stackdriver/propagation","internal","internal/tagencoding","plugin/ochttp","plugin/ochttp/propagation/b3","stats","stats/internal","stats/view","tag","trace","trace/propagation"]
+  revision = "7ae2ca9227cab799fc49766b807f11b8f176a326"
 
 [[projects]]
   branch = "master"
@@ -45,14 +51,8 @@
 
 [[projects]]
   branch = "master"
-  name = "golang.org/x/time"
-  packages = ["rate"]
-  revision = "8be79e1e0910c292df4e79c241bb7e8f7e725959"
-
-[[projects]]
-  branch = "master"
   name = "google.golang.org/api"
-  packages = ["cloudtrace/v1","gensupport","googleapi","googleapi/internal/uritemplates","googleapi/transport","internal","iterator","option","support/bundler","transport","transport/grpc","transport/http"]
+  packages = ["googleapi/transport","internal","iterator","option","support/bundler","transport","transport/grpc","transport/http"]
   revision = "4c6d21ebe7d908cb32717e14783f80ffee6cdcb0"
 
 [[projects]]
@@ -64,8 +64,8 @@
 [[projects]]
   branch = "master"
   name = "google.golang.org/genproto"
-  packages = ["googleapis/api/annotations","googleapis/api/distribution","googleapis/api/label","googleapis/api/metric","googleapis/api/monitoredres","googleapis/monitoring/v3","googleapis/rpc/status"]
-  revision = "ee236bd376b077c7a89f260c026c4735b195e459"
+  packages = ["googleapis/api/annotations","googleapis/api/distribution","googleapis/api/label","googleapis/api/metric","googleapis/api/monitoredres","googleapis/devtools/cloudtrace/v2","googleapis/monitoring/v3","googleapis/rpc/status","protobuf/field_mask"]
+  revision = "df60624c1e9b9d2973e889c7a1cff73155da81c4"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -76,6 +76,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7b450743246bae5667619ab0ceb4f7d36c41a41ae832b42494317d53c6ced0d8"
+  inputs-digest = "9d6f6688f1acd3d406706bb53911fbd2d0b83c8ee37f24739be70de72258fec7"
   solver-name = "gps-cdcl"
   solver-version = 1
